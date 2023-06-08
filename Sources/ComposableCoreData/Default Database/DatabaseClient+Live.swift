@@ -27,35 +27,27 @@ extension DatabaseClient where Model.ID == Record.ID {
         }
       },
       create: { model in
-        return try await withCheckedThrowingContinuation { continuation in
-          persistentContainer.performBackgroundTask { context in
-            model.convert(in: context)
-            do {
-              try context.save()
-              continuation.resume()
-            } catch {
-              continuation.resume(throwing: error)
-            }
-          }
+        return try await persistentContainer.performBackgroundTask { context in
+          model.convert(in: context)
+          try context.save()
         }
       },
       delete: { model in
-        let request = Record.fetchRequest(id: model.id)
-        do {
-          let models = try persistentContainer.viewContext.fetch(request)
+        try await persistentContainer.performBackgroundTask { context in
+          let request = Record.fetchRequest(id: model.id)
+          let models = try context.fetch(request)
           if let dbModel = models.first as? NSManagedObject {
-            persistentContainer.viewContext.delete(dbModel)
-            try? persistentContainer.viewContext.save()
+            context.delete(dbModel)
+            try context.save()
+          } else {
+            throw DatabaseProviderError.deleteFailure(message: "No matching NSManagedObject found")
           }
-        } catch {
-          fatalError("Woops")
         }
-        
       },
       update: { model in
-        let request = Record.fetchRequest(id: model.id)
-        do {
-          let models = try persistentContainer.viewContext.fetch(request)
+        try await persistentContainer.performBackgroundTask { context in
+          let request = Record.fetchRequest(id: model.id)
+          let models = try context.fetch(request)
           if let dbModel = models.first {
             let managedObject = dbModel as? NSManagedObject
             let keys = managedObject?.entity.attributesByName.keys
@@ -69,14 +61,14 @@ extension DatabaseClient where Model.ID == Record.ID {
                 }
               }
             }
-            
-            try? persistentContainer.viewContext.save()
+            try context.save()
+          } else {
+            throw DatabaseProviderError.updateFailure(message: "No matching NSManagedObject found")
           }
-        } catch {
-          fatalError("Woops")
+          
         }
-        
       }
+      
     )
   }
 }
