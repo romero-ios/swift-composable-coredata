@@ -12,20 +12,32 @@ extension DatabaseClient where Model.ID == Record.ID {
   public static func live(persistentContainer: NSPersistentContainer) -> Self {
     return .init(
       fetch: {
+        let context = persistentContainer.newBackgroundContext()
         return try await withCheckedThrowingContinuation { continuation in
-          let request = Record.fetchRequest()
-          do {
-            let models = try persistentContainer.viewContext.fetch(request)
-              .map { ($0 as! Record).convert() }
-            continuation.resume(returning: models)
-          } catch {
+          context.perform {
+            let request = Record.fetchRequest()
+            do {
+              let models = try context.fetch(request)
+                .map { ($0 as! Record).convert() }
+              continuation.resume(returning: models)
+            } catch {
               continuation.resume(throwing: DatabaseProviderError.fetchFailure(message: "Unable to fetch \(String(describing: type(of: Record.self)))"))
+            }
           }
         }
       },
       create: { model in
-        model.convert(in: persistentContainer.viewContext)
-        try? persistentContainer.viewContext.save()
+        return try await withCheckedThrowingContinuation { continuation in
+          persistentContainer.performBackgroundTask { context in
+            model.convert(in: context)
+            do {
+              try context.save()
+              continuation.resume()
+            } catch {
+              continuation.resume(throwing: error)
+            }
+          }
+        }
       },
       delete: { model in
         let request = Record.fetchRequest(id: model.id)
