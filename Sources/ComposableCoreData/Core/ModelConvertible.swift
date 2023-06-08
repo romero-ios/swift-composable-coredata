@@ -17,3 +17,27 @@ public protocol ModelConvertible: NSManagedObject {
   static func fetchRequest(id: ID) -> NSFetchRequest<FetchRequestResult>
   func convert() -> Model
 }
+
+extension ModelConvertible where ID == UUID {
+  public static func fetchRequest(id: ID) -> NSFetchRequest<FetchRequestResult> {
+    let request = NSFetchRequest<Self.FetchRequestResult>(entityName: Self.entityName)
+    request.predicate = .init(format: "id == %@", id as CVarArg)
+    return request
+  }
+}
+
+extension ModelConvertible where ID == Int {
+  public static func fetchRequest(id: Int) -> NSFetchRequest<FetchRequestResult> {
+    let request = NSFetchRequest<Self.FetchRequestResult>(entityName: Self.entityName)
+    request.predicate = .init(format: "id == %@", id)
+    return request
+  }
+}
+
+extension ModelConvertible where ID == Date {
+  public static func fetchRequest(id: Date) -> NSFetchRequest<FetchRequestResult> {
+    let request = NSFetchRequest<Self.FetchRequestResult>(entityName: Self.entityName)
+    request.predicate = .init(format: "id == %@", id as CVarArg)
+    return request
+  }
+}
