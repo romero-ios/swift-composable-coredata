@@ -63,7 +63,7 @@ extension DatabaseClient where Model.ID == Record.ID {
         try await persistentContainer.performBackgroundTask { context in
           let request = Record.fetchRequest(id: model.id)
           let models = try context.fetch(request)
-          if let dbModel = models.first as? NSManagedObject {
+          if let dbModel = models.first {
             context.delete(dbModel)
             try context.save()
           } else {
@@ -76,15 +76,14 @@ extension DatabaseClient where Model.ID == Record.ID {
           let request = Record.fetchRequest(id: model.id)
           let models = try context.fetch(request)
           if let dbModel = models.first {
-            let managedObject = dbModel as? NSManagedObject
-            let keys = managedObject?.entity.attributesByName.keys
+            let keys = dbModel.entity.attributesByName.keys
             
             let mirror = Mirror(reflecting: model)
-            for dbEntityKey in keys! {
+            for dbEntityKey in keys {
               for property in mirror.children.enumerated() where property.element.label == dbEntityKey {
                 let value = property.element.value as AnyObject
                 if !value.isKind(of: NSNull.self) {
-                  managedObject?.setValue(value, forKey: dbEntityKey)
+                  dbModel.setValue(value, forKey: dbEntityKey)
                 }
               }
             }

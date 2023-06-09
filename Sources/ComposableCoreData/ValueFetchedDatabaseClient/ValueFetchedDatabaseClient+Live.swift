@@ -84,18 +84,17 @@ extension ValueFetchedDatabaseClient where Model.ID == Record.ID {
           let request = Record.fetchRequest(id: model.id)
           let models = try context.fetch(request)
           if let dbModel = models.first {
-            let managedObject = dbModel as? NSManagedObject
-            let keys = managedObject?.entity.attributesByName.keys
+            let keys = dbModel.entity.attributesByName.keys
             let mirror = Mirror(reflecting: model)
-            for dbEntityKey in keys! {
+            for dbEntityKey in keys {
               for property in mirror.children.enumerated() where property.element.label == dbEntityKey {
                 let value = property.element.value as AnyObject
                 if !value.isKind(of: NSNull.self) {
                   if let casted = value as? (any Transformable) {
                     let transformed = casted.transform()
-                    managedObject?.setValue(transformed, forKey: dbEntityKey)
+                    dbModel.setValue(transformed, forKey: dbEntityKey)
                   } else {
-                    managedObject?.setValue(value, forKey: dbEntityKey)
+                    dbModel.setValue(value, forKey: dbEntityKey)
                   }
                 }
               }
