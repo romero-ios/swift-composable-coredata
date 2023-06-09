@@ -41,3 +41,9 @@ extension ModelConvertible where ID == Date {
     return request
   }
 }
+
+public protocol Transformable {
+  associatedtype Model: NSSecureCoding
+  
+  func transform() -> Model
+}
