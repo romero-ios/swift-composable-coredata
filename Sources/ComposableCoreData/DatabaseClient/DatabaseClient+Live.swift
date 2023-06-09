@@ -8,7 +8,34 @@
 import CoreData
 import Foundation
 
+public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertible>: DatabaseProviding where Record.Model == Model {
+  public var fetch: () async throws -> [Record.Model]
+  public var create: (Model) async throws -> Void
+  public var delete: (Model) async throws -> Void
+  public var update: (Model) async throws -> Void
+  
+  fileprivate init(
+    fetch: @escaping () async throws -> [Record.Model],
+    create: @escaping (Model) async throws -> Void,
+    delete: @escaping (Model) async throws -> Void,
+    update: @escaping (Model) async throws -> Void
+  )
+  {
+    self.fetch = fetch
+    self.create = create
+    self.delete = delete
+    self.update = update
+  }
+}
+
 extension DatabaseClient where Model.ID == Record.ID {
+  /// The `DatabaseClient` extension provides a convenience static function `live` for creating a `DatabaseClient` instance
+  /// with the provided `NSPersistentContainer`.
+  ///
+  /// The `live` function sets up the `fetch`, `create`, `delete`, and `update` operations to use the `NSPersistentContainer`'s
+  /// background context for performing these operations.
+  ///
+  /// This extension assumes that the `ID` of the `Model` type matches the `ID` of the `Record` type.
   public static func live(persistentContainer: NSPersistentContainer) -> Self {
     return .init(
       fetch: {
