@@ -8,7 +8,9 @@
 import Foundation
 
 public enum DatabaseProviderError: Error {
-    case fetchFailure(message: String)
+  case fetchFailure(message: String)
+  case deleteFailure(message: String)
+  case updateFailure(message: String)
 }
 
 public protocol DatabaseProviding {
@@ -16,23 +18,23 @@ public protocol DatabaseProviding {
   associatedtype Record: ModelConvertible where Record.Model == Model
   
   var fetch: () async throws -> [Record.Model] { get set }
-  var create: (Model) async -> Void { get set }
-  var delete: (Model) async -> Void { get set }
-  var update: (Model) async -> Void { get set }
+  var create: (Model) async throws -> Void { get set }
+  var delete: (Model) async throws -> Void { get set }
+  var update: (Model) async throws -> Void { get set }
 }
 
 /// A basic struct that provides CRUD operations for any `Model` and `Record` who share the same `ID`.
 public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertible>: DatabaseProviding where Record.Model == Model {
   public var fetch: () async throws -> [Record.Model]
-  public var create: (Model) async -> Void
-  public var delete: (Model) async -> Void
-  public var update: (Model) async -> Void
+  public var create: (Model) async throws -> Void
+  public var delete: (Model) async throws -> Void
+  public var update: (Model) async throws -> Void
   
   public init(
     fetch: @escaping () async throws -> [Record.Model],
-    create: @escaping (Model) async -> Void,
-    delete: @escaping (Model) async -> Void,
-    update: @escaping (Model) async -> Void
+    create: @escaping (Model) async throws -> Void,
+    delete: @escaping (Model) async throws -> Void,
+    update: @escaping (Model) async throws -> Void
   )
   {
     self.fetch = fetch
