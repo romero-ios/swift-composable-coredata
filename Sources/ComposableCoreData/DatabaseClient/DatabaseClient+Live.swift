@@ -14,7 +14,7 @@ public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertibl
   public var delete: (Model) async throws -> Void
   public var update: (Model) async throws -> Void
   
-  fileprivate init(
+  public init(
     fetch: @escaping () async throws -> [Record.Model],
     create: @escaping (Model) async throws -> Void,
     delete: @escaping (Model) async throws -> Void,

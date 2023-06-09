@@ -16,7 +16,7 @@ public struct ValueFetchedDatabaseClient<Model: CoreDataConvertible, Record: Mod
   public var fetchAllByValue: (HashableType) async throws -> [Record.Model]
   public var fetchForValue: (HashableType) async throws -> Record.Model
   
-  fileprivate init(
+  public init(
     fetch: @escaping () async throws -> [Record.Model],
     create: @escaping (Model) async throws -> Void,
     delete: @escaping (Model) async throws -> Void,
