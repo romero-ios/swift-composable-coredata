@@ -33,7 +33,7 @@ public struct ValueFetchedDatabaseClient<Model: CoreDataConvertible, Record: Mod
     self.fetchForValue = fetchForValue
       os_log(
         "%@ initialized with fetch: %@, create: %@, delete: %@, update: %@, fetchAllByValue: %@, fetchForValue: %@",
-        type(of: self) as! CVarArg,
+        String(describing: type(of: Self.self)),
         String(describing: fetch),
         String(describing: create),
         String(describing: delete),

@@ -28,7 +28,7 @@ public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertibl
     self.update = update
       os_log(
         "%@ initialized with fetch: %@, create: %@, delete: %@, update: %@", 
-        type(of: self) as! CVarArg,
+        String(describing: type(of: Self.self)),
         String(describing: fetch),
         String(describing: create),
         String(describing: delete),
