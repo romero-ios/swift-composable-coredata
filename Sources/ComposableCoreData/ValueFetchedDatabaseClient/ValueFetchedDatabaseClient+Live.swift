@@ -10,13 +10,79 @@ import CoreData
 import Foundation
 
 public struct ValueFetchedDatabaseClient<Model: CoreDataConvertible, Record: ModelConvertible, HashableType: Hashable>: ValueFetchedDatabaseProviding where Record.Model == Model {
-  public var fetch: () async throws -> [Record.Model]
-  public var create: (Model) async throws -> Void
-  public var delete: (Model) async throws -> Void
-  public var update: (Model) async throws -> Void
-  public var fetchAllByValue: (HashableType) async throws -> [Record.Model]
-  public var fetchForValue: (HashableType) async throws -> Record.Model
-  
+  private var _fetch: () async throws -> [Record.Model]
+  private var _create: (Model) async throws -> Void
+  private var _delete: (Model) async throws -> Void
+  private var _update: (Model) async throws -> Void
+  private var _fetchAllByValue: (HashableType) async throws -> [Record.Model]
+  private var _fetchForValue: (HashableType) async throws -> Record.Model
+
+  public var fetch: () async throws -> [Record.Model] {
+    get {
+      return _fetch
+    }
+    set {
+      _fetch = newValue
+      // Log when the fetch property is set
+      os_log("fetch property set")
+    }
+  }
+
+  public var create: (Model) async throws -> Void {
+    get {
+      return _create
+    }
+    set {
+      _create = newValue
+      // Log when the create property is set
+      os_log("create property set")
+    }
+  }
+
+  public var delete: (Model) async throws -> Void {
+    get {
+      return _delete
+    }
+    set {
+      _delete = newValue
+      // Log when the delete property is set
+      os_log("delete property set")
+    }
+  }
+
+  public var update: (Model) async throws -> Void {
+    get {
+      return _update
+    }
+    set {
+      _update = newValue
+      // Log when the update property is set
+      os_log("update property set")
+    }
+  }
+
+  public var fetchAllByValue: (HashableType) async throws -> [Record.Model] {
+    get {
+      return _fetchAllByValue
+    }
+    set {
+      _fetchAllByValue = newValue
+      // Log when the fetchAllByValue property is set
+      os_log("fetchAllByValue property set")
+    }
+  }
+
+  public var fetchForValue: (HashableType) async throws -> Record.Model {
+    get {
+      return _fetchForValue
+    }
+    set {
+      _fetchForValue = newValue
+      // Log when the fetchForValue property is set
+      os_log("fetchForValue property set")
+    }
+  }
+
   public init(
     fetch: @escaping () async throws -> [Record.Model],
     create: @escaping (Model) async throws -> Void,
@@ -25,24 +91,26 @@ public struct ValueFetchedDatabaseClient<Model: CoreDataConvertible, Record: Mod
     fetchAllByValue: @escaping (HashableType) async throws -> [Record.Model],
     fetchForValue: @escaping (HashableType) async throws -> Record.Model
   ) {
-    self.fetch = fetch
-    self.create = create
-    self.delete = delete
-    self.update = update
-    self.fetchAllByValue = fetchAllByValue
-    self.fetchForValue = fetchForValue
-      os_log(
-        "%@ initialized with fetch: %@, create: %@, delete: %@, update: %@, fetchAllByValue: %@, fetchForValue: %@",
-        String(describing: type(of: Self.self)),
-        String(describing: fetch),
-        String(describing: create),
-        String(describing: delete),
-        String(describing: update),
-        String(describing: fetchAllByValue),
-        String(describing: fetchForValue)
-      )
+    self._fetch = fetch
+    self._create = create
+    self._delete = delete
+    self._update = update
+    self._fetchAllByValue = fetchAllByValue
+    self._fetchForValue = fetchForValue
+
+    os_log(
+      "%@ initialized with fetch: %@, create: %@, delete: %@, update: %@, fetchAllByValue: %@, fetchForValue: %@",
+      String(describing: type(of: Self.self)),
+      String(describing: fetch),
+      String(describing: create),
+      String(describing: delete),
+      String(describing: update),
+      String(describing: fetchAllByValue),
+      String(describing: fetchForValue)
+    )
   }
 }
+
 
 extension ValueFetchedDatabaseClient where Model.ID == Record.ID {
   /// This extension provides an implementation of `ValueFetchedDatabaseClient` where `Model.ID` equals `Record.ID`.
