@@ -5,6 +5,7 @@
 //  Created by Daniel Romero on 6/8/23.
 //
 
+import OSLog
 import CoreData
 import Foundation
 
@@ -30,6 +31,7 @@ public struct ValueFetchedDatabaseClient<Model: CoreDataConvertible, Record: Mod
     self.update = update
     self.fetchAllByValue = fetchAllByValue
     self.fetchForValue = fetchForValue
+    os_log("\(type(of: Self.self)) initialized")
   }
 }
 

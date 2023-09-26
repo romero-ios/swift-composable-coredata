@@ -5,6 +5,7 @@
 //  Created by Daniel Romero on 6/8/23.
 //
 
+import OSLog
 import CoreData
 import Foundation
 
@@ -25,6 +26,7 @@ public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertibl
     self.create = create
     self.delete = delete
     self.update = update
+    os_log("\(type(of: Self.self)) initialized")
   }
 }
 
