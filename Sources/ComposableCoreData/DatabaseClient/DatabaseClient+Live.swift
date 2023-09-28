@@ -160,7 +160,7 @@ public struct _DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertib
   public var delete: (Model) async throws -> Void
   public var update: (Model) async throws -> Void
   
-  init(
+  public init(
     fetch: @escaping ([Filter], [SortDescriptor]) async throws -> [Model],
     create: @escaping (Model) async throws -> Void,
     delete: @escaping (Model) async throws -> Void,
