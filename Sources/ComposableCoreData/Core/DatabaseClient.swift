@@ -43,3 +43,14 @@ public protocol DatabaseProviding {
   var delete: (Model) async throws -> Void { get set }
   var update: (Model) async throws -> Void { get set }
 }
+
+public protocol _DatabaseProviding {
+  associatedtype Model: CoreDataConvertible
+  associatedtype Record: ModelConvertible where Record.Model == Model
+  
+  var fetch: (_ filters: [Filter], _ sortDescriptors: [SortDescriptor]) async throws -> [Record.Model] { get set }
+  var create: (Model) async throws -> Void { get set }
+  var delete: (Model) async throws -> Void { get set }
+  var update: (Model) async throws -> Void { get set }
+}
+

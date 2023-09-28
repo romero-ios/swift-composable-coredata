@@ -1,6 +1,6 @@
 //
 //  DatabaseClient+Live.swift
-//  
+//
 //
 //  Created by Daniel Romero on 6/8/23.
 //
@@ -14,7 +14,7 @@ public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertibl
   private var _create: (Model) async throws -> Void
   private var _delete: (Model) async throws -> Void
   private var _update: (Model) async throws -> Void
-
+  
   public var fetch: () async throws -> [Record.Model] {
     get {
       return _fetch
@@ -25,7 +25,7 @@ public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertibl
       os_log("fetch property set")
     }
   }
-
+  
   public var create: (Model) async throws -> Void {
     get {
       return _create
@@ -36,7 +36,7 @@ public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertibl
       os_log("create property set")
     }
   }
-
+  
   public var delete: (Model) async throws -> Void {
     get {
       return _delete
@@ -47,7 +47,7 @@ public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertibl
       os_log("delete property set")
     }
   }
-
+  
   public var update: (Model) async throws -> Void {
     get {
       return _update
@@ -58,7 +58,7 @@ public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertibl
       os_log("update property set")
     }
   }
-
+  
   public init(
     fetch: @escaping () async throws -> [Record.Model],
     create: @escaping (Model) async throws -> Void,
@@ -70,7 +70,7 @@ public struct DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertibl
     self._create = create
     self._delete = delete
     self._update = update
-
+    
     os_log(
       "%@ initialized with fetch: %@, create: %@, delete: %@, update: %@",
       String(describing: type(of: Self.self)),
@@ -153,3 +153,88 @@ extension DatabaseClient where Model.ID == Record.ID {
     )
   }
 }
+
+public struct _DatabaseClient<Model: CoreDataConvertible, Record: ModelConvertible>: _DatabaseProviding where Record.Model == Model {
+  public var fetch: ([Filter], [SortDescriptor]) async throws -> [Model]
+  public var create: (Model) async throws -> Void
+  public var delete: (Model) async throws -> Void
+  public var update: (Model) async throws -> Void
+  
+  init(
+    fetch: @escaping ([Filter], [SortDescriptor]) async throws -> [Model],
+    create: @escaping (Model) async throws -> Void,
+    delete: @escaping (Model) async throws -> Void,
+    update: @escaping (Model) async throws -> Void
+  ) {
+    self.fetch = fetch
+    self.create = create
+    self.delete = delete
+    self.update = update
+  }
+}
+
+extension _DatabaseClient where Model.ID == Record.ID {
+  public static func live(persistentContainer: NSPersistentContainer) -> Self {
+    return .init(
+      fetch: { filters, sortDescriptors in
+        let context = persistentContainer.newBackgroundContext()
+        return try await withCheckedThrowingContinuation { continuation in
+          context.perform {
+            let request = Record.fetchRequest()
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: filters.map { $0.predicate() })
+            request.sortDescriptors = sortDescriptors.map { $0.sortDescriptor() }
+            
+            do {
+              let models = try context.fetch(request)
+                .map { ($0 as! Record).convert() }
+              continuation.resume(returning: models)
+            } catch {
+              continuation.resume(throwing: DatabaseProviderError.fetchFailure(message: "Unable to fetch \(String(describing: type(of: Record.self)))"))
+            }
+          }
+        }
+      },
+      create: { model in
+        return try await persistentContainer.performBackgroundTask { context in
+          model.convert(in: context)
+          try context.save()
+        }
+      },
+      delete: { model in
+        try await persistentContainer.performBackgroundTask { context in
+          let request = Record.fetchRequest(id: model.id)
+          let models = try context.fetch(request)
+          if let dbModel = models.first {
+            context.delete(dbModel)
+            try context.save()
+          } else {
+            throw DatabaseProviderError.deleteFailure(message: "No matching NSManagedObject found")
+          }
+        }
+      },
+      update: { model in
+        try await persistentContainer.performBackgroundTask { context in
+          let request = Record.fetchRequest(id: model.id)
+          let models = try context.fetch(request)
+          if let dbModel = models.first {
+            let keys = dbModel.entity.attributesByName.keys
+            
+            let mirror = Mirror(reflecting: model)
+            for dbEntityKey in keys {
+              for property in mirror.children.enumerated() where property.element.label == dbEntityKey {
+                let value = property.element.value as AnyObject
+                if !value.isKind(of: NSNull.self) {
+                  dbModel.setValue(value, forKey: dbEntityKey)
+                }
+              }
+            }
+            try context.save()
+          } else {
+            throw DatabaseProviderError.updateFailure(message: "No matching NSManagedObject found")
+          }
+        }
+      }
+    )
+  }
+}
+
