@@ -181,7 +181,7 @@ extension _DatabaseClient where Model.ID == Record.ID {
         return try await withCheckedThrowingContinuation { continuation in
           context.perform {
             let request = Record.fetchRequest()
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: filters.map { $0.predicate() })
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: filters.map { $0.predicate })
             request.sortDescriptors = sortDescriptors.map { $0.sortDescriptor() }
             
             do {
