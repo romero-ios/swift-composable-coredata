@@ -17,7 +17,7 @@ import Foundation
 ///
 /// - Case: `updateFailure(message: String)`
 ///   This error case represents a failure while attempting to update data in the database. The associated `message` should provide specifics about the update error.
-public enum DatabaseProviderError: Error {
+public enum DatabaseProviderError: Error, Equatable {
   case fetchFailure(message: String)
   case deleteFailure(message: String)
   case updateFailure(message: String)
