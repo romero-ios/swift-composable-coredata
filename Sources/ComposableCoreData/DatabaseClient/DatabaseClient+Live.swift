@@ -137,9 +137,14 @@ extension DatabaseClient where Model.ID == Record.ID {
             for dbEntityKey in keys {
               for property in mirror.children.enumerated() where property.element.label == dbEntityKey {
                 let value = property.element.value as AnyObject
-                if !value.isKind(of: NSNull.self) {
-                  dbModel.setValue(value, forKey: dbEntityKey)
-                }
+                  if !value.isKind(of: NSNull.self) {
+                    if let casted = value as? (any Transformable) {
+                      let transformed = casted.transform()
+                      dbModel.setValue(transformed, forKey: dbEntityKey)
+                    } else {
+                      dbModel.setValue(value, forKey: dbEntityKey)
+                    }
+                  }
               }
             }
             try context.save()
@@ -223,9 +228,14 @@ extension _DatabaseClient where Model.ID == Record.ID {
             for dbEntityKey in keys {
               for property in mirror.children.enumerated() where property.element.label == dbEntityKey {
                 let value = property.element.value as AnyObject
-                if !value.isKind(of: NSNull.self) {
-                  dbModel.setValue(value, forKey: dbEntityKey)
-                }
+                  if !value.isKind(of: NSNull.self) {
+                    if let casted = value as? (any Transformable) {
+                      let transformed = casted.transform()
+                      dbModel.setValue(transformed, forKey: dbEntityKey)
+                    } else {
+                      dbModel.setValue(value, forKey: dbEntityKey)
+                    }
+                  }
               }
             }
             try context.save()
